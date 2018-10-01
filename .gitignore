@@ -1,0 +1,8 @@
+/toolchain
+/avrdude
+*.o
+*.hex
+*.map
+*.d
+*.elf
+*.a
