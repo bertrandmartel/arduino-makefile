@@ -29,7 +29,13 @@ CXX_FLAGS+=-c -g -Os -w -std=gnu++11 -fpermissive -fno-exceptions -ffunction-sec
 CC_FLAGS+=-c -g -Os -w -std=gnu11 -ffunction-sections -fdata-sections -MMD -flto -fno-fat-lto-objects
 ELF_FLAGS+=-w -Os -g -flto -fuse-linker-plugin -Wl,--gc-sections -mmcu=$(MCU)
 
-EXTRA_FLAGS=-DARDUINO=10805 -DARDUINO_AVR_UNO -DARDUINO_ARCH_AVR -mmcu=$(MCU) -DF_CPU=$(FREQ_CPU)
+EXTRA_FLAGS=-DARDUINO=10805 -DARDUINO_ARCH_AVR -mmcu=$(MCU) -DF_CPU=$(FREQ_CPU)
+
+ifdef BOARD
+EXTRA_FLAGS+=$(BOARD)
+else
+EXTRA_FLAGS+=-DARDUINO_AVR_UNO
+endif
 
 CORE_LIB=core.a
 LIB_OBJECTS= $(ARDUINO_PATH)/abi.o $(ARDUINO_PATH)/HardwareSerial3.o $(ARDUINO_PATH)/new.o $(ARDUINO_PATH)/USBCore.o $(ARDUINO_PATH)/wiring_pulse.o \
@@ -62,6 +68,9 @@ arduino_lib: $(LIB_OBJECTS)
 
 build: target.hex
 
+%.a: $(OBJECTS_SRC)
+	$(AR) rcs $@ $^
+
 clean:
 	@echo "cleaning"
 	$(shell rm $(OBJECTS_SRC) 2> /dev/null)
@@ -88,7 +97,7 @@ distclean:
 	$(CC) -c -g -x assembler-with-cpp -flto -MMD $(EXTRA_FLAGS) $(INCLUDES) $< -o $@
 
 target.elf: $(OBJECTS_SRC)
-	$(ELF) $(ELF_FLAGS) -o target.elf $(OBJECTS_SRC) ./core.a -L. -lm
+	$(ELF) $(ELF_FLAGS) -o target.elf $(OBJECTS_SRC) $(STATIC_LIB) $(CORE_LIB) -L. -lm
 
 target.eep: target.elf
 	$(OBJCOPY) -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load \
